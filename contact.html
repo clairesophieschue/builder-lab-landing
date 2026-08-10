@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Builder Lab</title>
+<meta name="description" content="Contactez Builder Lab pour échanger sur vos besoins ou en savoir plus sur le prochain parcours.">
+<meta name="robots" content="index, follow">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a href="#main" class="skip-link">Aller au contenu principal</a>
+
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo" aria-label="Builder Lab — accueil">
+      <img src="assets/logo-builder-lab.png" alt="Builder Lab" class="logo-img">
+    </a>
+    <nav class="site-nav" aria-label="Navigation principale">
+      <a href="index.html#solutions">Solutions</a>
+      <a href="index.html#formations">Formations</a>
+      <a href="index.html#cas-clients">Cas clients</a>
+      <a href="index.html#a-propos">À propos</a>
+    </nav>
+    <div class="header-actions">
+      <a href="contact.html" class="btn btn-primary">Contactez-moi</a>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile">
+  <ul class="mobile-nav-list">
+    <li><a href="index.html#solutions">Solutions</a></li>
+    <li><a href="index.html#formations">Formations</a></li>
+    <li><a href="index.html#cas-clients">Cas clients</a></li>
+    <li><a href="index.html#a-propos">À propos</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <a href="contact.html" class="btn btn-primary">Contactez-moi</a>
+</nav>
+
+<main id="main">
+  <section class="contact-hero">
+    <div class="container contact-grid">
+      <div class="contact-info" data-reveal>
+        <p class="eyebrow">Contact</p>
+        <h1 class="contact-title">Parlons de votre besoin</h1>
+        <p class="contact-text">Une formation, un premier outil à mettre en place ou simplement besoin d'y voir plus clair&nbsp;? Partagez votre contexte en quelques lignes.</p>
+        <ul class="contact-points">
+          <li>Formation &amp; montée en compétence</li>
+          <li>Diagnostic &amp; conseil</li>
+          <li>Mise en place d'un premier outil IA</li>
+        </ul>
+      </div>
+
+      <div class="contact-form-wrap" data-reveal>
+        <form class="contact-form" id="contact-form" novalidate>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="first_name">Prénom *</label>
+              <input type="text" id="first_name" name="first_name" autocomplete="given-name">
+              <p class="form-error" data-error-for="first_name"></p>
+            </div>
+            <div class="form-field">
+              <label for="last_name">Nom *</label>
+              <input type="text" id="last_name" name="last_name" autocomplete="family-name">
+              <p class="form-error" data-error-for="last_name"></p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="email">Email professionnel *</label>
+              <input type="email" id="email" name="email" autocomplete="email">
+              <p class="form-error" data-error-for="email"></p>
+            </div>
+            <div class="form-field">
+              <label for="company">Entreprise</label>
+              <input type="text" id="company" name="company" autocomplete="organization">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="need_type">Votre besoin *</label>
+            <select id="need_type" name="need_type">
+              <option value="">Sélectionnez une option</option>
+              <option value="Formation">Formation</option>
+              <option value="Diagnostic / conseil">Diagnostic / conseil</option>
+              <option value="Mise en place d'un outil">Mise en place d'un outil</option>
+              <option value="Autre / je ne sais pas encore">Autre / je ne sais pas encore</option>
+            </select>
+            <p class="form-error" data-error-for="need_type"></p>
+          </div>
+
+          <div class="form-field">
+            <label for="message">Parlez-moi de votre contexte *</label>
+            <textarea id="message" name="message" rows="5"></textarea>
+            <p class="form-error" data-error-for="message"></p>
+          </div>
+
+          <div class="form-field form-field--hp" aria-hidden="true">
+            <label for="website">Laissez ce champ vide</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button type="submit" class="btn btn-primary contact-submit" id="contact-submit">Envoyer ma demande</button>
+
+          <p class="contact-form-error" id="contact-form-error" role="alert" hidden>Un problème est survenu pendant l'envoi. Vous pouvez réessayer dans quelques instants.</p>
+
+          <p class="contact-privacy">Vos informations sont utilisées uniquement pour traiter votre demande.<br><a href="politique-confidentialite.html">Politique de confidentialité</a></p>
+        </form>
+
+        <div class="contact-success" id="contact-success" hidden>
+          <h2>Merci, votre message est bien parti.</h2>
+          <p>Je reviens vers vous rapidement.</p>
+          <a href="index.html" class="btn btn-primary">Retour à l'accueil</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <a href="index.html" class="footer-logo">[ Builder Lab ]</a>
+      <nav class="footer-nav" aria-label="Liens de navigation">
+        <a href="index.html#solutions">Solutions</a>
+        <a href="index.html#formations">Formations</a>
+        <a href="index.html#cas-clients">Cas clients</a>
+        <a href="index.html#a-propos">À propos</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <a href="#" aria-disabled="true">LinkedIn</a>
+        <a href="mentions-legales.html">Mentions légales</a>
+        <a href="politique-confidentialite.html">Politique de confidentialité</a>
+      </div>
+      <p class="footer-copyright">&copy; 2026 Builder Lab. Tous droits réservés.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
