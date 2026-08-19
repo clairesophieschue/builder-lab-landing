@@ -2055,6 +2055,14 @@ body.has-fixed-bg footer {
   margin-top: var(--space-2xs);
 }
 
+.contact-reassurance {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text-gray);
+  text-align: left;
+}
+
 .contact-form-error {
   margin-top: -0.5rem;
   font-size: 0.9rem;

@@ -180,20 +180,45 @@
 
     var PROJECTS = window.BUILDER_LAB_PROJECTS || [];
 
-    function sortKey(sortDate) {
-      var parts = sortDate.split("-");
-      var year = parseInt(parts[0], 10);
-      var month = parts[1] ? parseInt(parts[1], 10) : 0;
-      return year * 100 + month;
-    }
-
     function escapeHtml(str) {
       var div = document.createElement("div");
       div.textContent = str == null ? "" : str;
       return div.innerHTML;
     }
 
-    function cardHtml(p) {
+    function findProject(name) {
+      for (var i = 0; i < PROJECTS.length; i++) {
+        if (PROJECTS[i].name === name) return PROJECTS[i];
+      }
+      return null;
+    }
+
+    // Sélection éditoriale (pas les 3 plus récents) : raconte le
+    // positionnement Builder Lab en 3 cartes — Création → Design → Mise en
+    // place. Les fiches complètes restent dans projects-data.js ; seuls le
+    // label et une description courte sont propres à la homepage.
+    var FEATURED = [
+      {
+        match: "Naterra",
+        label: "Création",
+        description: "Conception et développement en 3 mois d’une application mobile cartographique iOS et Android, de l’idée jusqu’à une première version fonctionnelle."
+      },
+      {
+        match: "Stellantis",
+        label: "Design",
+        description: "Conception d’un dispositif international de montée en compétence en IA générative et prompt engineering pour 3 500 collaborateurs, déployé sur 4 fuseaux horaires — 96 % de satisfaction."
+      },
+      {
+        match: "Le Wagon B2C",
+        displayName: "Le Wagon",
+        label: "Mise en place",
+        description: "Refonte de la gestion de 120 professeurs sur 40 campus : centralisation des données et automatisation de 15 workflows."
+      }
+    ];
+
+    function cardHtml(f) {
+      var p = findProject(f.match);
+      if (!p) return "";
       var tags = p.tags.map(function (tag) {
         return "<span>" + escapeHtml(tag) + "</span>";
       }).join("");
@@ -201,11 +226,11 @@
       return (
         '<article class="project-card">' +
         '<div class="project-card-top">' +
-        '<span class="project-card-category">' + escapeHtml(p.type) + "</span>" +
+        '<span class="project-card-category">' + escapeHtml(f.label) + "</span>" +
         '<span class="project-card-date">' + escapeHtml(p.date) + "</span>" +
         "</div>" +
-        '<h3 class="project-card-title">' + escapeHtml(p.name) + "</h3>" +
-        '<p class="project-card-text">' + escapeHtml(p.description) + "</p>" +
+        '<h3 class="project-card-title">' + escapeHtml(f.displayName || p.name) + "</h3>" +
+        '<p class="project-card-text">' + escapeHtml(f.description) + "</p>" +
         '<p class="project-card-context' + (isLive ? " project-card-context--live" : "") + '">' +
         escapeHtml(p.context) +
         "</p>" +
@@ -214,11 +239,7 @@
       );
     }
 
-    var sorted = PROJECTS.slice().sort(function (a, b) {
-      return sortKey(b.sortDate) - sortKey(a.sortDate);
-    });
-
-    grid.innerHTML = sorted.slice(0, 3).map(cardHtml).join("");
+    grid.innerHTML = FEATURED.map(cardHtml).join("");
   });
 
   /* -----------------------------------------------------------------------
