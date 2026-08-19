@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>À propos — Builder Lab</title>
-<meta name="description" content="Claire-Sophie Schueller a créé Builder Lab pour aider les professionnels à passer de la curiosité à l'action avec l'IA.">
+<title>Projets IA, data &amp; transformation | Builder Lab</title>
+<meta name="description" content="Découvrez une sélection de projets réalisés en conseil, mise en place d’outils IA, automatisation, data et formation.">
 <meta name="robots" content="index, follow">
+<link rel="canonical" href="https://builder-lab.fr/projets.html">
+<meta property="og:title" content="Projets IA, data & transformation | Builder Lab">
+<meta property="og:description" content="Découvrez une sélection de projets réalisés en conseil, mise en place d’outils IA, automatisation, data et formation.">
+<meta property="og:type" content="website">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,19 +59,59 @@
 
   <section class="internal-hero">
     <div class="container internal-hero-inner">
-      <h1 class="internal-hero-title">Derrière Builder Lab</h1>
-      <p class="internal-hero-sub">Comprendre le parcours, les convictions et l’expérience qui ont donné naissance à Builder Lab.</p>
+      <h1 class="internal-hero-title">Mes projets</h1>
+      <p class="internal-hero-sub">Parcourez mon portfolio avec une sélection des projets les plus impactants</p>
     </div>
   </section>
 
-  <section class="page-content page-content--after-hero">
-    <div class="container page-content-inner">
-      <p>Je suis Claire-Sophie Schueller. Après plusieurs années dans la transformation, les opérations, la formation et les projets tech, j'ai créé Builder Lab pour aider les professionnels à passer de la curiosité à l'action avec l'IA.</p>
-      <p>Mon approche&nbsp;: rendre les sujets complexes simples, utiles et directement applicables — sans jargon, sans posture, et sans perdre le discernement métier.</p>
-      <p>Builder Lab n'est ni une formation générique, ni un outil magique. C'est un espace pour construire, avec méthode, un premier usage concret de l'IA.</p>
-      <p><a href="index.html" class="link-back">&larr; Retour à l'accueil</a></p>
+  <section class="section-pad section-pad--tight projects-catalog">
+    <div class="container">
+      <div class="projects-toolbar" data-reveal>
+        <div class="projects-toolbar-filters">
+          <div class="filter-field">
+            <label class="filter-field-label" for="filter-type-select">Type de projet</label>
+            <div class="select-wrap">
+              <select id="filter-type-select" class="select-control">
+                <option value="all" selected>Tous</option>
+                <option value="Conseil">Conseil</option>
+                <option value="Mise en place">Mise en place</option>
+                <option value="Formation">Formation</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-field">
+            <label class="filter-field-label" for="filter-tool-select">Outil</label>
+            <div class="select-wrap">
+              <select id="filter-tool-select" class="select-control">
+                <option value="all" selected>Tous</option>
+                <option value="ChatGPT">ChatGPT</option>
+                <option value="Claude">Claude</option>
+                <option value="Claude Code">Claude Code</option>
+                <option value="Make">Make</option>
+                <option value="Airtable">Airtable</option>
+                <option value="Asana">Asana</option>
+                <option value="Power BI">Power BI</option>
+                <option value="Power Automate">Power Automate</option>
+                <option value="Microsoft Copilot">Microsoft Copilot</option>
+                <option value="Python">Python</option>
+                <option value="Alteryx">Alteryx</option>
+                <option value="Azure DevOps">Azure DevOps</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="projects-count" id="projects-count">23 projets</p>
+      </div>
+
+      <div class="projects-grid" id="projects-grid" data-reveal></div>
+
+      <div class="projects-empty" id="projects-empty" hidden>
+        <p>Aucun projet ne correspond à ces filtres.</p>
+        <button type="button" id="projects-reset" class="projects-reset-btn">Réinitialiser les filtres</button>
+      </div>
     </div>
   </section>
+
 </main>
 
 <footer class="site-footer">
@@ -93,6 +137,7 @@
   </div>
 </footer>
 
+<script src="projects-data.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

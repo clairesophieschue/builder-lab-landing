@@ -96,28 +96,71 @@
   });
 
   /* -----------------------------------------------------------------------
-     Hero parallax (desktop, motion allowed only) — purely decorative
-     transform on an image that already fills its container.
+     Manifeste — per-word opacity reveal genuinely driven by scroll
+     position (not a one-shot IntersectionObserver trigger). Words are
+     wrapped in spans only when motion is allowed; otherwise the plain
+     text from index.html is left untouched and fully visible.
      ----------------------------------------------------------------------- */
   safe(function () {
-    var heroMedia = document.getElementById("hero-media");
-    if (!heroMedia || reduceMotion || window.innerWidth <= 720) return;
+    var section = document.getElementById("manifeste");
+    var textEl = document.getElementById("manifesto-text");
+    if (!section || !textEl || reduceMotion) return;
 
-    var heroImg = heroMedia.querySelector("img");
-    if (!heroImg) return;
+    var words = textEl.textContent.trim().split(/\s+/);
+    textEl.innerHTML = words
+      .map(function (word) {
+        return '<span class="manifesto-word">' + word + "</span>";
+      })
+      .join(" ");
+
+    var wordEls = Array.prototype.slice.call(textEl.querySelectorAll(".manifesto-word"));
+    if (!wordEls.length) return;
+
+    var total = wordEls.length;
+    var span = 1.6 / total; // each word's own transition window, slightly
+    // overlapping its neighbours so the reveal reads as one continuous
+    // wave rather than discrete steps.
+    // Start positions are scaled so the LAST word's window still ends
+    // exactly at progress = 1 — otherwise it would asymptotically
+    // approach full opacity without ever quite reaching it.
+    var maxStart = Math.max(0, 1 - span);
+
     var ticking = false;
 
-    var applyParallax = function () {
-      var offset = Math.min(window.scrollY * 0.12, 90);
-      heroImg.style.transform = "translateY(" + offset + "px)";
+    var updateReveal = function () {
+      // Measured from the text block itself (not the section) so the
+      // reveal is tied to when the words are actually well into the
+      // viewport, not to when the (taller, centred) section first
+      // appears at the bottom of the screen.
+      var rect = textEl.getBoundingClientRect();
+      var viewportH = window.innerHeight;
+      // progress 0 → text block's top still at ~68% down the viewport
+      // (plenty of black/glow visible first, nothing revealed yet);
+      // progress 1 → text block's top has reached ~30% from the top
+      // (upper half of the viewport, nearly fully lit).
+      var start = viewportH * 0.68;
+      var end = viewportH * 0.3;
+      var progress = (start - rect.top) / (start - end);
+      progress = Math.min(1, Math.max(0, progress));
+
+      wordEls.forEach(function (el, i) {
+        var wordStart = total > 1 ? (i / (total - 1)) * maxStart : 0;
+        var local = (progress - wordStart) / span;
+        local = Math.min(1, Math.max(0, local));
+        el.style.opacity = 0.25 + local * 0.75;
+        el.style.filter = "blur(" + (1 - local) + "px)";
+      });
+
       ticking = false;
     };
+
+    updateReveal();
 
     window.addEventListener(
       "scroll",
       function () {
         if (!ticking) {
-          window.requestAnimationFrame(applyParallax);
+          window.requestAnimationFrame(updateReveal);
           ticking = true;
         }
       },
@@ -126,372 +169,23 @@
   });
 
   /* -----------------------------------------------------------------------
-     Cas clients carousel — plain scroll-snap track driven by direct
-     scrollLeft/scrollBy calls (not scrollIntoView, which can be flaky
-     across browsers when the scrolling ancestor isn't the obvious one).
-     All cards are static HTML and always rendered — nothing here gates
-     their visibility, only which one is currently centred.
+     Projets — homepage : uniquement les 3 projets les plus récents, sans
+     filtre ni pagination. Lit le tableau partagé exposé par
+     projects-data.js (chargé avant ce fichier) — aucune donnée dupliquée
+     entre la homepage et projets.html.
      ----------------------------------------------------------------------- */
   safe(function () {
-    var track = document.getElementById("cases-track");
-    var prevBtn = document.getElementById("cases-prev");
-    var nextBtn = document.getElementById("cases-next");
-    var dotsWrap = document.getElementById("cases-dots");
-    if (!track || !prevBtn || !nextBtn || !dotsWrap) return;
+    var grid = document.getElementById("projects-grid-home");
+    if (!grid) return;
 
-    var cards = Array.prototype.slice.call(track.children);
-    if (!cards.length) return;
+    var PROJECTS = window.BUILDER_LAB_PROJECTS || [];
 
-    var dots = cards.map(function (_, index) {
-      var dot = document.createElement("button");
-      dot.type = "button";
-      dot.className = "cases-dot";
-      dot.setAttribute("aria-label", "Aller au cas client " + (index + 1));
-      dot.addEventListener("click", function () {
-        goTo(index);
-        stopAutoplay();
-        startAutoplay();
-      });
-      dotsWrap.appendChild(dot);
-      return dot;
-    });
-
-    var currentIndex = 0;
-
-    var setActiveDot = function (index) {
-      currentIndex = index;
-      dots.forEach(function (dot, i) {
-        dot.classList.toggle("is-active", i === index);
-      });
-    };
-
-    var step = function () {
-      return cards[0].getBoundingClientRect().width + 36; /* card + gap */
-    };
-
-    var goTo = function (index) {
-      var clamped = ((index % cards.length) + cards.length) % cards.length;
-      track.scrollTo({
-        left: cards[clamped].offsetLeft,
-        behavior: reduceMotion ? "auto" : "smooth"
-      });
-      setActiveDot(clamped);
-    };
-
-    prevBtn.addEventListener("click", function () {
-      goTo(currentIndex - 1);
-      stopAutoplay();
-      startAutoplay();
-    });
-    nextBtn.addEventListener("click", function () {
-      goTo(currentIndex + 1);
-      stopAutoplay();
-      startAutoplay();
-    });
-
-    /* Keep dots in sync with manual swipe/scroll too, throttled to one
-       check per animation frame. */
-    var scrollTicking = false;
-    track.addEventListener(
-      "scroll",
-      function () {
-        if (scrollTicking) return;
-        scrollTicking = true;
-        window.requestAnimationFrame(function () {
-          var approx = Math.round(track.scrollLeft / step());
-          var clamped = Math.max(0, Math.min(approx, cards.length - 1));
-          if (clamped !== currentIndex) setActiveDot(clamped);
-          scrollTicking = false;
-        });
-      },
-      { passive: true }
-    );
-
-    setActiveDot(0);
-
-    var autoplayId = null;
-
-    var startAutoplay = function () {
-      if (reduceMotion) return;
-      autoplayId = window.setInterval(function () {
-        goTo(currentIndex + 1);
-      }, 5500);
-    };
-
-    var stopAutoplay = function () {
-      if (autoplayId) {
-        window.clearInterval(autoplayId);
-        autoplayId = null;
-      }
-    };
-
-    ["mouseenter", "focusin", "touchstart"].forEach(function (evt) {
-      track.addEventListener(evt, stopAutoplay, { passive: true });
-    });
-    ["mouseleave", "focusout"].forEach(function (evt) {
-      track.addEventListener(evt, startAutoplay, { passive: true });
-    });
-
-    startAutoplay();
-  });
-
-  /* -----------------------------------------------------------------------
-     Formations & accompagnements — catalog data, filters, carousel.
-
-     To add a new offer: append an object to PRODUCTS below with the same
-     fields. `categories` must use slugs from CATEGORIES (add a new one
-     there first if needed — it will automatically get its own filter
-     pill). `priceNote` and `note` are optional (omit or leave "").
-     To change a price: edit the `price`/`priceNote` string directly.
-     To change categories/labels: edit the CATEGORIES array.
-     ----------------------------------------------------------------------- */
-  safe(function () {
-    var track = document.getElementById("catalog-track");
-    var filtersWrap = document.getElementById("catalog-filters");
-    var prevBtn = document.getElementById("catalog-prev");
-    var nextBtn = document.getElementById("catalog-next");
-    if (!track || !filtersWrap || !prevBtn || !nextBtn) return;
-
-    var CATEGORIES = [
-      { slug: "tous", label: "Tous" },
-      { slug: "introduction", label: "Introduction" },
-      { slug: "outils", label: "Outils" },
-      { slug: "automatisation", label: "Automatisation" },
-      { slug: "formations-metier", label: "Formations métier" },
-      { slug: "conseil", label: "Conseil" }
-    ];
-
-    var CATEGORY_LABELS = {};
-    CATEGORIES.forEach(function (c) {
-      CATEGORY_LABELS[c.slug] = c.label;
-    });
-
-    var PRODUCTS = [
-      {
-        title: "Trouver sa place à l'ère de l'IA",
-        categories: ["introduction"],
-        duration: "3h",
-        audience: "Tous niveaux",
-        description: "Comprendre ce que l'IA change réellement dans le travail, tester les outils et identifier les premiers usages utiles pour son métier.",
-        price: "199 € HT / participant en session ouverte",
-        priceNote: "ou à partir de 990 € HT / groupe en entreprise",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les dirigeants de PME",
-        categories: ["formations-metier"],
-        duration: "3h",
-        audience: "Direction",
-        description: "Comprendre les opportunités et les limites de l'IA, identifier les cas d'usage prioritaires et décider par quoi commencer.",
-        price: "À partir de 990 € HT / groupe",
-        priceNote: "jusqu'à 12 participants",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Prendre en main ChatGPT",
-        categories: ["outils"],
-        duration: "3h",
-        audience: "Débutant",
-        description: "Comprendre les fonctionnalités clés, mieux cadrer ses demandes, travailler avec ses fichiers et créer des usages directement applicables au quotidien.",
-        price: "199 € HT / participant",
-        priceNote: "ou à partir de 990 € HT / groupe",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Prendre en main Claude & Claude Cowork",
-        categories: ["outils"],
-        duration: "3h",
-        audience: "Débutant à intermédiaire",
-        description: "Apprendre à travailler avec Claude sur des dossiers, analyser des documents, structurer une mission et produire des livrables plus efficacement.",
-        price: "199 € HT / participant",
-        priceNote: "ou à partir de 990 € HT / groupe",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Prendre en main Microsoft Copilot",
-        categories: ["outils"],
-        duration: "3h",
-        audience: "Microsoft 365",
-        description: "Découvrir les usages de Copilot dans l'environnement Microsoft 365 et construire de premières routines adaptées à son métier.",
-        price: "À partir de 1 090 € HT / groupe",
-        note: "Licences compatibles nécessaires pour certains exercices.",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Construire son premier assistant métier",
-        categories: ["automatisation"],
-        duration: "½ journée",
-        audience: "Atelier pratique",
-        description: "Partir d'une tâche réelle et construire un assistant adapté à son activité : contexte, règles, exemples, tests et garde-fous.",
-        price: "249 € HT / participant",
-        priceNote: "ou à partir de 1 200 € HT / groupe",
-        cta: "Découvrir l'atelier",
-        link: "contact.html"
-      },
-      {
-        title: "Introduction à Claude Code",
-        categories: ["outils"],
-        duration: "½ journée",
-        audience: "Débutant",
-        description: "Découvrir comment travailler avec un agent de code pour explorer un projet, modifier un site et construire de premières fonctionnalités simples.",
-        price: "249 € HT / participant",
-        priceNote: "ou à partir de 1 200 € HT / groupe",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Créer sa landing page avec Claude Code",
-        categories: ["outils"],
-        duration: "1 journée",
-        audience: "Atelier pratique",
-        description: "Passer d'une idée à une première landing page fonctionnelle : structure, contenu, design, génération du code, tests et mise en ligne.",
-        price: "À partir de 390 € HT / participant",
-        priceNote: "ou à partir de 1 800 € HT / groupe",
-        note: "Accès Claude compatible avec Claude Code nécessaire.",
-        cta: "Découvrir l'atelier",
-        link: "contact.html"
-      },
-      {
-        title: "Analyser ses données avec l'IA",
-        categories: ["automatisation"],
-        duration: "½ journée",
-        audience: "Data",
-        description: "Explorer ses données, poser les bonnes questions, identifier des tendances et transformer des fichiers bruts en analyses utiles à la décision.",
-        price: "249 € HT / participant",
-        priceNote: "ou à partir de 1 200 € HT / groupe",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Automatiser ses premières tâches avec Make",
-        categories: ["automatisation"],
-        duration: "½ journée",
-        audience: "Débutant",
-        description: "Comprendre la logique d'un workflow, connecter plusieurs outils et construire une première automatisation à partir d'un besoin réel.",
-        price: "249 € HT / participant",
-        priceNote: "ou à partir de 1 200 € HT / groupe",
-        cta: "Découvrir l'atelier",
-        link: "contact.html"
-      },
-      {
-        title: "Découvrir n8n et les workflows IA",
-        categories: ["automatisation"],
-        duration: "1 journée",
-        audience: "Intermédiaire",
-        description: "Construire des workflows plus avancés, connecter plusieurs services et intégrer des briques IA dans ses automatisations.",
-        price: "390 € HT / participant",
-        priceNote: "ou à partir de 1 800 € HT / groupe",
-        cta: "Découvrir la formation",
-        link: "contact.html"
-      },
-      {
-        title: "Construire son premier workflow IA",
-        categories: ["automatisation"],
-        duration: "1 journée",
-        audience: "Atelier pratique",
-        description: "Choisir une tâche répétitive, concevoir le workflow, connecter les outils et repartir avec une première automatisation testée.",
-        price: "390 € HT / participant",
-        priceNote: "ou à partir de 1 800 € HT / groupe",
-        cta: "Découvrir l'atelier",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les experts-comptables",
-        categories: ["formations-metier"],
-        duration: "½ journée",
-        audience: "Cabinets",
-        description: "Identifier et tester les usages adaptés au cabinet : analyse documentaire, préparation client, synthèse, reporting et automatisation, avec un focus sur la confidentialité.",
-        price: "À partir de 1 200 € HT / groupe",
-        priceNote: "jusqu'à 12 participants",
-        cta: "Voir le programme",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les métiers du tourisme",
-        categories: ["formations-metier"],
-        duration: "½ journée",
-        audience: "Tourisme",
-        description: "Utiliser l'IA pour répondre aux clients, préparer des offres, produire des contenus, exploiter les informations locales et automatiser certaines tâches.",
-        price: "À partir de 1 200 € HT / groupe",
-        cta: "Voir le programme",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les cabinets d'avocats",
-        categories: ["formations-metier"],
-        duration: "½ journée",
-        audience: "Juridique",
-        description: "Explorer les usages de l'IA pour la recherche, l'analyse documentaire et la préparation de dossiers, tout en gardant la maîtrise des données sensibles.",
-        price: "À partir de 1 200 € HT / groupe",
-        cta: "Voir le programme",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les équipes commerciales",
-        categories: ["formations-metier"],
-        duration: "½ journée",
-        audience: "Sales",
-        description: "Utiliser l'IA pour préparer les rendez-vous, qualifier les besoins, structurer les propositions, produire les comptes rendus et faciliter le suivi commercial.",
-        price: "À partir de 1 200 € HT / groupe",
-        cta: "Voir le programme",
-        link: "contact.html"
-      },
-      {
-        title: "L'IA pour les fonctions RH",
-        categories: ["formations-metier"],
-        duration: "½ journée",
-        audience: "RH",
-        description: "Identifier les usages pertinents pour préparer des entretiens, structurer des contenus, analyser des documents et créer de premiers assistants internes.",
-        price: "À partir de 1 200 € HT / groupe",
-        cta: "Voir le programme",
-        link: "contact.html"
-      },
-      {
-        title: "Diagnostic IA express",
-        categories: ["conseil"],
-        duration: "Mission courte",
-        audience: "PME / Direction",
-        description: "Faire le point sur vos outils, vos données, vos processus et vos irritants pour identifier vos premiers cas d'usage prioritaires.",
-        price: "À partir de 690 € HT",
-        cta: "Parler de votre besoin",
-        link: "contact.html"
-      },
-      {
-        title: "Diagnostic IA & feuille de route",
-        categories: ["conseil"],
-        duration: "Conseil",
-        audience: "IA & Data",
-        description: "Analyser l'existant, identifier les opportunités, prioriser les cas d'usage et construire une feuille de route de déploiement.",
-        price: "À partir de 1 500 € HT",
-        cta: "Demander un diagnostic",
-        link: "contact.html"
-      },
-      {
-        title: "Coaching IA métier",
-        categories: ["conseil"],
-        duration: "",
-        audience: "Individuel ou petite équipe",
-        description: "Travailler sur une problématique précise : assistant commercial, analyse documentaire, reporting, automatisation ou prise en main d'un outil.",
-        price: "À partir de 250 € HT / session",
-        cta: "Parler de votre besoin",
-        link: "contact.html"
-      },
-      {
-        title: "Mise en place d'un premier outil IA",
-        categories: ["conseil"],
-        duration: "Construction",
-        audience: "Adoption",
-        description: "Cadrage, choix de la solution, construction, tests et prise en main d'un premier assistant, workflow ou outil adapté à l'activité.",
-        price: "Sur devis",
-        cta: "Parler de votre projet",
-        link: "contact.html"
-      }
-    ];
+    function sortKey(sortDate) {
+      var parts = sortDate.split("-");
+      var year = parseInt(parts[0], 10);
+      var month = parts[1] ? parseInt(parts[1], 10) : 0;
+      return year * 100 + month;
+    }
 
     function escapeHtml(str) {
       var div = document.createElement("div");
@@ -499,104 +193,125 @@
       return div.innerHTML;
     }
 
-    function categoryLabel(product) {
-      return product.categories
-        .map(function (slug) {
-          return CATEGORY_LABELS[slug] || slug;
-        })
-        .join(" · ");
-    }
-
-    function metaLine(product) {
-      if (product.duration && product.audience) return product.duration + " · " + product.audience;
-      return product.duration || product.audience || "";
-    }
-
     function cardHtml(p) {
-      var extras = "";
-      if (p.priceNote) extras += '<p class="catalog-card-price-note">' + escapeHtml(p.priceNote) + "</p>";
-      if (p.note) extras += '<p class="catalog-card-note">' + escapeHtml(p.note) + "</p>";
+      var tags = p.tags.map(function (tag) {
+        return "<span>" + escapeHtml(tag) + "</span>";
+      }).join("");
+      var isLive = p.context === "en direct";
       return (
-        '<article class="catalog-card">' +
-        '<p class="catalog-card-label">' + escapeHtml(categoryLabel(p)) + "</p>" +
-        '<h3 class="catalog-card-title">' + escapeHtml(p.title) + "</h3>" +
-        '<p class="catalog-card-meta">' + escapeHtml(metaLine(p)) + "</p>" +
-        '<p class="catalog-card-text">' + escapeHtml(p.description) + "</p>" +
-        // .catalog-card-price-block always renders (even with no priceNote/note)
-        // so it reserves the same vertical space on every card — this is what
-        // keeps the CTA button at an identical position regardless of content.
-        '<div class="catalog-card-footer">' +
-        '<div class="catalog-card-price-block">' +
-        '<p class="catalog-card-price">' + escapeHtml(p.price) + "</p>" +
-        extras +
+        '<article class="project-card">' +
+        '<div class="project-card-top">' +
+        '<span class="project-card-category">' + escapeHtml(p.type) + "</span>" +
+        '<span class="project-card-date">' + escapeHtml(p.date) + "</span>" +
         "</div>" +
-        '<a href="' + p.link + '" class="catalog-card-cta">' + escapeHtml(p.cta) + "</a>" +
-        "</div>" +
+        '<h3 class="project-card-title">' + escapeHtml(p.name) + "</h3>" +
+        '<p class="project-card-text">' + escapeHtml(p.description) + "</p>" +
+        '<p class="project-card-context' + (isLive ? " project-card-context--live" : "") + '">' +
+        escapeHtml(p.context) +
+        "</p>" +
+        '<div class="project-card-tags">' + tags + "</div>" +
         "</article>"
       );
     }
 
-    var updateArrows = function () {
-      prevBtn.disabled = track.scrollLeft <= 4;
-      nextBtn.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
-    };
+    var sorted = PROJECTS.slice().sort(function (a, b) {
+      return sortKey(b.sortDate) - sortKey(a.sortDate);
+    });
 
-    function renderCards(list) {
-      track.innerHTML = list.map(cardHtml).join("");
-      track.scrollLeft = 0;
-      updateArrows();
+    grid.innerHTML = sorted.slice(0, 3).map(cardHtml).join("");
+  });
+
+  /* -----------------------------------------------------------------------
+     Projets — page dédiée (projets.html) : portfolio complet, filtrable
+     par 2 <select> natifs (Type + Outil, logique ET), tri chronologique
+     décroissant, pas de pagination. Même tableau partagé que ci-dessus.
+     ----------------------------------------------------------------------- */
+  safe(function () {
+    var grid = document.getElementById("projects-grid");
+    if (!grid) return;
+
+    var PROJECTS = window.BUILDER_LAB_PROJECTS || [];
+
+    function sortKey(sortDate) {
+      var parts = sortDate.split("-");
+      var year = parseInt(parts[0], 10);
+      var month = parts[1] ? parseInt(parts[1], 10) : 0;
+      return year * 100 + month;
     }
 
-    filtersWrap.innerHTML = CATEGORIES.map(function (c, i) {
+    var sorted = PROJECTS.slice().sort(function (a, b) {
+      return sortKey(b.sortDate) - sortKey(a.sortDate);
+    });
+
+    var typeSelect = document.getElementById("filter-type-select");
+    var toolSelect = document.getElementById("filter-tool-select");
+    var countEl = document.getElementById("projects-count");
+    var emptyEl = document.getElementById("projects-empty");
+    var resetBtn = document.getElementById("projects-reset");
+
+    function escapeHtml(str) {
+      var div = document.createElement("div");
+      div.textContent = str == null ? "" : str;
+      return div.innerHTML;
+    }
+
+    function cardHtml(p) {
+      var tags = p.tags.map(function (tag) {
+        return "<span>" + escapeHtml(tag) + "</span>";
+      }).join("");
+      var isLive = p.context === "en direct";
       return (
-        '<button type="button" class="catalog-filter' + (i === 0 ? " is-active" : "") + '" data-filter="' + c.slug + '">' +
-        escapeHtml(c.label) +
-        "</button>"
+        '<article class="project-card">' +
+        '<div class="project-card-top">' +
+        '<span class="project-card-category">' + escapeHtml(p.type) + "</span>" +
+        '<span class="project-card-date">' + escapeHtml(p.date) + "</span>" +
+        "</div>" +
+        '<h3 class="project-card-title">' + escapeHtml(p.name) + "</h3>" +
+        '<p class="project-card-text">' + escapeHtml(p.description) + "</p>" +
+        '<p class="project-card-context' + (isLive ? " project-card-context--live" : "") + '">' +
+        escapeHtml(p.context) +
+        "</p>" +
+        '<div class="project-card-tags">' + tags + "</div>" +
+        "</article>"
       );
-    }).join("");
+    }
 
-    var filterButtons = Array.prototype.slice.call(filtersWrap.querySelectorAll(".catalog-filter"));
-
-    filterButtons.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        filterButtons.forEach(function (b) {
-          b.classList.toggle("is-active", b === btn);
-        });
-        var slug = btn.dataset.filter;
-        var list = slug === "tous" ? PRODUCTS : PRODUCTS.filter(function (p) {
-          return p.categories.indexOf(slug) !== -1;
-        });
-        renderCards(list);
+    function getFiltered() {
+      var type = typeSelect ? typeSelect.value : "all";
+      var tool = toolSelect ? toolSelect.value : "all";
+      return sorted.filter(function (p) {
+        var matchesType = type === "all" || p.type === type;
+        var matchesTool = tool === "all" || p.tags.indexOf(tool) !== -1;
+        return matchesType && matchesTool;
       });
-    });
+    }
 
-    var step = function () {
-      var first = track.firstElementChild;
-      return first ? first.getBoundingClientRect().width + 30 : 0;
-    };
+    function render() {
+      var filtered = getFiltered();
 
-    prevBtn.addEventListener("click", function () {
-      track.scrollBy({ left: -step(), behavior: reduceMotion ? "auto" : "smooth" });
-    });
-    nextBtn.addEventListener("click", function () {
-      track.scrollBy({ left: step(), behavior: reduceMotion ? "auto" : "smooth" });
-    });
+      grid.innerHTML = filtered.map(cardHtml).join("");
+      grid.hidden = filtered.length === 0;
+      if (emptyEl) emptyEl.hidden = filtered.length !== 0;
+      if (countEl) {
+        countEl.textContent = filtered.length + (filtered.length > 1 ? " projets" : " projet");
+      }
+    }
 
-    var scrollTicking = false;
-    track.addEventListener(
-      "scroll",
-      function () {
-        if (scrollTicking) return;
-        scrollTicking = true;
-        window.requestAnimationFrame(function () {
-          updateArrows();
-          scrollTicking = false;
-        });
-      },
-      { passive: true }
-    );
+    if (typeSelect) {
+      typeSelect.addEventListener("change", render);
+    }
+    if (toolSelect) {
+      toolSelect.addEventListener("change", render);
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        if (typeSelect) typeSelect.value = "all";
+        if (toolSelect) toolSelect.value = "all";
+        render();
+      });
+    }
 
-    renderCards(PRODUCTS);
+    render();
   });
 
   /* -----------------------------------------------------------------------

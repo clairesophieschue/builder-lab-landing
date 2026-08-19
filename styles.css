@@ -353,7 +353,7 @@ section[id] {
 }
 
 .logo-img {
-  height: 22px;
+  height: 26px;
   width: auto;
 }
 
@@ -431,6 +431,45 @@ section[id] {
 }
 
 /* ==========================================================================
+   Fixed background layer (homepage only — gated by body.has-fixed-bg so
+   this never applies on any other page, even though the stylesheet is
+   shared). Sits behind every section at z-index 0; sections above it
+   turn translucent (see each section's own rules) to let it show
+   through. Reuses the exact Hero photo — no new image, one network
+   fetch shared with the Hero's own <img>. Deliberately background-image
+   + position:fixed rather than background-attachment:fixed, which is
+   unreliable on mobile Safari. */
+/* top/bottom carry the same -6% vertical overscan the Hero's own image
+   used to have (relative to its 100vh box, so -6vh here) — purely to
+   reproduce the exact same cover-fit scale/zoom the Hero rendered at
+   before, now that this is the only copy of the photo on the page. */
+body.has-fixed-bg .site-bg-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: -6vh;
+  bottom: -6vh;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #0A0A0A;
+  background-image: url("assets/hero-atelier-builder-lab.webp");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* Everything else in normal flow must paint above the fixed layer.
+   The header and mobile-nav overlay already carry their own
+   position:fixed + higher z-index (200 / 190) further down this file,
+   so they're deliberately left out here — this only needs to lift the
+   in-flow content (main, footer) above the new z-index:0 layer. */
+body.has-fixed-bg main,
+body.has-fixed-bg footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
    Hero
    ========================================================================== */
 
@@ -445,30 +484,17 @@ section[id] {
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  background: var(--color-black);
 }
 
-.hero-media {
-  position: absolute;
-  inset: -6% 0 -6% 0;
-  z-index: 1;
-}
-
-.hero-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Single place to tune framing for a new photo. Start centered; shift
-     the X value above 50% to reveal more of the image's right side and
-     keep the left (where the text sits) visually calmer, if needed. */
-  object-position: center center;
-  will-change: transform;
-}
-
-.hero-media::after {
+/* No image here — the Hero is transparent, revealing .site-bg-fixed
+   behind it. This overlay only darkens that shared layer for text
+   contrast; it must never carry its own background-image. */
+.hero::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 38%, rgba(0, 0, 0, 0.78) 100%),
     linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.15) 100%);
@@ -489,14 +515,17 @@ section[id] {
   max-width: 37rem;
 }
 
+/* Sober badge: a tinted, semi-transparent fill of the Builder Lab green
+   plus a matching border — reads clearly on the dark hero photo without
+   any glow/neon effect. Radius matches the site's .btn-primary pill. */
 .hero-tag {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1rem;
+  display: inline-flex;
+  align-items: center;
   margin-bottom: var(--space-sm);
-}
-
-.hero-tag span {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 255, 59, 0.45);
+  background: rgba(201, 255, 59, 0.12);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -510,8 +539,17 @@ section[id] {
   text-transform: uppercase;
   color: var(--color-white);
   font-size: clamp(1.9rem, 3.6vw, 4.1rem);
-  line-height: 1;
-  letter-spacing: 0;
+  line-height: 1.05;
+  letter-spacing: 0.015em;
+}
+
+/* Forces the exact 3-line desktop split; switched off below 1024px so
+   smaller viewports reflow the title naturally instead of inheriting
+   desktop-only line breaks. */
+@media (max-width: 1023px) {
+  .hero-title-break {
+    display: none;
+  }
 }
 
 .hero-subtitle {
@@ -538,10 +576,6 @@ section[id] {
   margin-top: var(--space-md);
 }
 
-.hero-cta .link-cta {
-  color: var(--color-white);
-}
-
 /* Every primary CTA that needs the rounded "pill" treatment (as opposed
    to the sharp default .btn-primary) shares this one rule for shape —
    radius and border are never redeclared per-context, only sized. The
@@ -549,8 +583,7 @@ section[id] {
    exact rule so it can never visually drift from the Hero CTA again. */
 .hero-cta .btn-primary,
 .header-actions .btn-primary,
-.mobile-nav .btn-primary,
-.home-about-content .btn-primary {
+.mobile-nav .btn-primary {
   border-radius: 8px;
   border-width: 0;
 }
@@ -609,464 +642,496 @@ section[id] {
 }
 
 /* ==========================================================================
-   Solutions
+   Manifeste
    ========================================================================== */
 
-.solutions {
-  background: var(--color-white);
-  border-top: 1px solid var(--color-border);
-}
-
-.solutions-head {
-  max-width: 54rem;
-  margin: 0 auto var(--space-md);
-  text-align: center;
-}
-
-.solutions-head .eyebrow {
+.manifesto {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
   justify-content: center;
-}
-
-.solutions-head .section-title {
-  margin-top: var(--space-2xs);
-  font-size: clamp(1.65rem, 2.15vw, 2.05rem);
-  white-space: normal;
+  background: #0A0A0A;
+  padding: var(--space-lg) 0;
 }
 
 @media (min-width: 1024px) {
-  .solutions-head .section-title {
-    white-space: nowrap;
+  .manifesto {
+    min-height: 60vh;
   }
 }
 
-.solutions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  align-items: stretch;
-}
-
-.solution-card {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #E7E7E7;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--color-white);
-}
-
-.solution-card-media {
-  position: relative;
-  aspect-ratio: 16 / 5;
-  overflow: hidden;
-  background: var(--color-cream);
-}
-
-/* Positioned out of flow so the image's own intrinsic ratio can never
-   override the container's aspect-ratio (a flex-item content-sizing
-   quirk otherwise lets a replaced child do exactly that). */
-.solution-card-media img {
+/* Diffuse, static glow — a soft light source behind the text, never a
+   flat block of color. Heavy blur keeps the edge invisible. */
+.manifesto-glow {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 55% at 78% 60%, rgba(201, 255, 59, 0.22), rgba(201, 255, 59, 0) 70%);
+  filter: blur(70px);
 }
 
-.solution-card-body {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-lg) var(--space-md);
-  text-align: left;
+.manifesto-inner {
+  position: relative;
+  z-index: 1;
 }
 
-.solution-card-label {
-  font-size: 0.8rem;
+.manifesto-text {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: var(--font-body);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-gray);
+  letter-spacing: -0.01em;
+  font-size: clamp(2rem, 2.7vw, 3rem);
+  line-height: 1.18;
+  color: var(--color-white);
 }
 
-.solution-card-title {
-  margin-top: 0.6rem;
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  font-size: clamp(1.2rem, 1.6vw, 1.4rem);
-  line-height: 1.3;
+@media (max-width: 1023px) {
+  .manifesto-text {
+    font-size: 2.35rem;
+  }
 }
 
-.solution-card-tags {
-  margin-top: 0.5rem;
-  font-weight: 500;
-  font-size: 0.85rem;
-  color: var(--color-text-gray);
+/* Initial dimmed state for the per-word scroll reveal — only applied to
+   words script.js actually wraps in spans. Plain text (no JS, or
+   prefers-reduced-motion) simply inherits .manifesto-text's full-opacity
+   white and is never touched. */
+.manifesto-word {
+  opacity: 0.25;
+  filter: blur(1px);
+  will-change: opacity;
 }
 
-.solution-card-text {
-  margin-top: 0.75rem;
-  margin-bottom: var(--space-md);
-  color: var(--color-text-gray);
-  font-size: 0.98rem;
-  line-height: 1.6;
+@media (prefers-reduced-motion: reduce) {
+  .manifesto-word {
+    opacity: 1;
+    filter: none;
+  }
 }
 
-.solution-card-cta {
-  margin-top: auto;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.85rem 1.6rem;
-  border-radius: 8px;
-  background: var(--color-accent);
-  color: var(--color-black);
-  font-weight: 700;
-  font-size: 0.92rem;
-  transition: background var(--transition-fast), color var(--transition-fast);
-}
-
-.solution-card-cta:hover {
-  background: var(--color-black);
-  color: var(--color-accent);
-}
-
-@media (max-width: 860px) {
-  .solutions-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+@media (max-width: 480px) {
+  .manifesto .container {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
-  .solution-card-body {
-    padding: var(--space-md) var(--space-sm);
-  }
-
-  .solution-card-cta {
-    align-self: stretch;
-    justify-content: center;
+  .manifesto-text {
+    font-size: 1.85rem;
   }
 }
 
 /* ==========================================================================
-   Formations & accompagnements (catalog)
+   Services
    ========================================================================== */
 
-/* The pale green fill is the entire "rupture visuelle" — no image, no
-   overlap trick. Swap this value for a different tint if needed. */
-.catalog {
-  background: #F6FFD9;
-  padding: var(--space-2xl) 0;
+/* Translucent panel over the fixed Hero-photo background layer — the
+   image should read as barely perceptible, never compete with content.
+   Cards inside stay fully opaque (see .service-card); the transparency
+   is deliberately a section-level effect only. */
+.services {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(222, 222, 210, 0.5);
 }
 
-.catalog-panel {
-  position: relative;
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: 28px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
-  padding: var(--space-xl) var(--space-lg);
-}
-
-.catalog-head {
-  max-width: none;
-}
-
-.catalog-head .section-sub {
-  max-width: none;
-}
-
-@media (min-width: 1100px) {
-  .catalog-head .section-title,
-  .catalog-head .section-sub {
-    white-space: nowrap;
+@media (max-width: 767px) {
+  .services {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
   }
 }
 
-.catalog-filters {
-  margin-top: var(--space-md);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+.services-head {
+  text-align: center;
 }
 
-@media (min-width: 1100px) {
-  .catalog-filters {
-    margin-top: var(--space-sm);
-  }
-}
-
-.catalog-filter {
-  padding: 0.55rem 1.1rem;
-  border: 1px solid #E7E7E7;
+/* Same visual language as .hero-tag (border/fill derived from the accent
+   green, same radius) but inverted for a white background: dark text
+   instead of bright green, which would be unreadable here. */
+.services-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  background: var(--color-white);
-  color: var(--color-ink);
+  border: 1px solid rgba(201, 255, 59, 0.6);
+  background: rgba(201, 255, 59, 0.1);
   font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.services-title {
+  margin-top: 1.375rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  color: var(--color-ink);
+}
+
+@media (min-width: 768px) {
+  .services-title {
+    font-size: 2.4rem;
+  }
+}
+
+.services-sub {
+  margin-top: 1rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--color-text-gray);
+}
+
+.services-grid {
+  margin-top: var(--space-lg);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md) 1.625rem;
+}
+
+@media (min-width: 640px) {
+  .services-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .services-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-white);
+  overflow: hidden;
+  transition: transform 220ms var(--ease), border-color 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+
+.service-card:hover {
+  transform: translateY(-3px);
+  border-color: #C8C8BE;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+}
+
+.service-card-media {
+  height: 180px;
+  overflow: hidden;
+  background: var(--color-cream);
+}
+
+.service-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms var(--ease);
+}
+
+.service-card:hover .service-card-media img {
+  transform: scale(1.02);
+}
+
+/* Main content block — flex:1 so it absorbs any natural height
+   difference between cards, keeping .service-card-footer pinned to
+   exactly the same Y on all three regardless of content length. */
+.service-card-content {
+  flex: 1 1 auto;
+  padding: 1.5rem 2rem 1.375rem;
+}
+
+.service-card-title {
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.service-card-text {
+  margin-top: 0.6875rem;
+  color: var(--color-text-gray);
+  font-size: 1rem;
+  line-height: 1.45;
+  min-height: calc(1.45em * 2);
+}
+
+.service-card-list {
+  margin-top: 1.3125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.service-card-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
   font-weight: 500;
-  font-size: 0.85rem;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  font-size: 0.93rem;
+  line-height: 1.4;
+  color: var(--color-ink);
 }
 
-.catalog-filter:hover {
-  border-color: var(--color-black);
+.service-card-list li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  margin-top: 0.5em;
+  background: var(--color-accent);
 }
 
-.catalog-filter.is-active {
-  background: var(--color-black);
-  border-color: var(--color-black);
+/* Dedicated footer zone — margin-top:auto (via being the last flex
+   child after a flex:1 content block) pins it to the same Y on every
+   card. The near-white fill is deliberately almost imperceptible. */
+.service-card-footer {
+  padding: 1.1875rem 2rem;
+  border-top: 1px solid var(--color-border);
+  background: #FAFAF7;
+}
+
+.service-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-black);
+  transition: color 200ms var(--ease);
+}
+
+.service-card-cta span {
+  display: inline-block;
+  color: var(--color-accent);
+  transition: transform 200ms var(--ease);
+}
+
+.service-card:hover .service-card-cta {
+  color: #000000;
+}
+
+.service-card:hover .service-card-cta span {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card,
+  .service-card-media img,
+  .service-card-cta span {
+    transition: none;
+  }
+
+  .service-card:hover {
+    transform: none;
+  }
+
+  .service-card:hover .service-card-media img {
+    transform: none;
+  }
+
+  .service-card:hover .service-card-cta span {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .services .container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* ==========================================================================
+   La méthode Builder Lab
+   ========================================================================== */
+
+/* Near-opaque dark panel — the fixed photo layer stays barely
+   perceptible; this must never read as "dark glass". */
+.method {
+  position: relative;
+  overflow: hidden;
+  background: rgba(5, 5, 5, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6rem 0;
+}
+
+@media (max-width: 767px) {
+  .method {
+    background: rgba(5, 5, 5, 0.97);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+/* Same diffuse-glow technique as .manifesto-glow — a stronger source
+   top-left plus a very faint counterpart on the right for balance,
+   depth without ever reading as a flat green patch. */
+.method-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 52% 52% at 10% 12%, rgba(201, 255, 59, 0.16), rgba(201, 255, 59, 0) 70%),
+    radial-gradient(ellipse 36% 36% at 92% 72%, rgba(201, 255, 59, 0.05), rgba(201, 255, 59, 0) 70%);
+  filter: blur(80px);
+}
+
+.method-head {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+/* Same values as .hero-tag (the dark-background mini-label variant) —
+   kept as its own class since every section owns its -label class here. */
+.method-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 255, 59, 0.45);
+  background: rgba(201, 255, 59, 0.12);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.method-title {
+  margin-top: 1.375rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 2.2rem;
+  line-height: 1.2;
   color: var(--color-white);
 }
 
-.catalog-nav-row {
-  margin-top: var(--space-md);
-  display: flex;
-  justify-content: flex-end;
+@media (min-width: 768px) {
+  .method-title {
+    font-size: 2.5rem;
+  }
 }
 
-.catalog-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.catalog-arrow {
-  width: 44px;
-  height: 44px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.method-sub {
+  margin-top: 1rem;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--font-body);
+  font-weight: 400;
   font-size: 1.05rem;
-  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+  line-height: 1.5;
+  color: var(--color-text-gray-on-dark);
 }
 
-.catalog-arrow:hover {
-  border-color: var(--color-black);
-  background: var(--color-black);
-  color: var(--color-accent);
-}
-
-.catalog-arrow:disabled {
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.catalog-track-wrap {
-  margin-top: var(--space-sm);
-}
-
-.catalog-track {
+.method-grid {
+  position: relative;
+  z-index: 1;
+  margin-top: 3.75rem;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 64px) / 3);
-  gap: 32px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: var(--space-sm);
-  scrollbar-width: none;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
 }
 
-.catalog-track::-webkit-scrollbar {
-  display: none;
+@media (min-width: 768px) {
+  .method-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.875rem;
+  }
 }
 
-/* Fixed height — measured as the tallest natural card across the full
-   21-item catalog (worst case ≈ 385px), not recalculated per filter. This
-   is what keeps the carousel and CTA row from jumping when the filter
-   changes. See the responsive block below for the mobile value. */
-.catalog-card {
-  scroll-snap-align: start;
-  height: 388px;
+.method-card {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #E7E7E7;
-  border-radius: 16px;
-  background: var(--color-white);
-  padding: var(--space-sm);
+  border: 1px solid var(--color-border-on-dark);
+  border-radius: 14px;
+  background: #171717;
+  padding: 1.7rem;
+  transition: transform 200ms var(--ease), border-color 200ms var(--ease), background 200ms var(--ease);
 }
 
-.catalog-card-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-gray);
+@media (hover: hover) {
+  .method-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(247, 247, 241, 0.28);
+    background: #1B1B1B;
+  }
 }
 
-.catalog-card-title {
-  margin-top: 0.4rem;
+.method-card-title {
+  font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: -0.005em;
-  font-size: 1.05rem;
-  line-height: 1.28;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--color-white);
 }
 
-.catalog-card-meta {
-  margin-top: 0.3rem;
-  font-size: 0.82rem;
-  color: var(--color-text-gray);
-}
-
-.catalog-card-text {
-  margin-top: 0.6rem;
-  color: var(--color-text-gray);
-  font-size: 0.88rem;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-}
-
-.catalog-card-footer {
-  margin-top: auto;
-  padding-top: var(--space-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-/* Reserves the same vertical space on every card whether or not this
-   product has a priceNote/note — this, combined with the title clamp
-   and description clamp above, is what keeps the CTA button at an
-   identical Y position on every card regardless of its content. */
-.catalog-card-price-block {
-  min-height: 5.5rem;
-}
-
-.catalog-card-price {
-  font-weight: 700;
-  font-size: 1.05rem;
-  line-height: 1.35;
-}
-
-.catalog-card-price-note,
-.catalog-card-note {
-  margin-top: 0.2rem;
+.method-card-text {
+  margin-top: 0.7rem;
+  margin-bottom: 1.2rem;
+  font-family: var(--font-body);
   font-weight: 400;
-  font-size: 0.8rem;
-  color: var(--color-text-gray);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--color-text-gray-on-dark);
 }
 
-.catalog-card-cta {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.85rem 1.6rem;
-  border-radius: 8px;
-  background: var(--color-accent);
-  color: var(--color-black);
-  font-weight: 700;
-  font-size: 0.92rem;
-  transition: background var(--transition-fast), color var(--transition-fast);
+.method-card-micro {
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(247, 247, 241, 0.1);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #96968D;
 }
 
-.catalog-card-cta:hover {
-  background: var(--color-black);
+.method-card-micro-arrow {
   color: var(--color-accent);
 }
 
-.catalog-cta {
-  margin-top: var(--space-xl);
-  padding: var(--space-md) var(--space-lg);
-  background: #FAFFEA;
-  border: 1px solid var(--color-accent);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  flex-wrap: wrap;
-}
+@media (prefers-reduced-motion: reduce) {
+  .method-card {
+    transition: none;
+  }
 
-.catalog-cta-copy {
-  max-width: 28rem;
-}
-
-.catalog-cta-title {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: clamp(1.2rem, 1.6vw, 1.4rem);
-  line-height: 1.3;
-}
-
-.catalog-cta-text {
-  margin-top: 0.4rem;
-  color: var(--color-text-gray);
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-.catalog-cta-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-@media (max-width: 720px) {
-  .catalog-cta {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: var(--space-md);
+  .method-card:hover {
+    transform: none;
   }
 }
 
-/* Matches the Solutions "En savoir plus" buttons exactly — scoped here
-   so the shared .btn-primary used elsewhere is untouched. */
-.catalog-cta-actions .btn-primary {
-  padding: 0.85rem 1.6rem;
-  border-radius: 8px;
-  border-width: 0;
-  font-size: 0.92rem;
-}
-
-@media (max-width: 900px) {
-  .catalog-panel {
-    border-radius: 24px;
+@media (max-width: 480px) {
+  .method {
+    padding: 4.5rem 0;
   }
 
-  .catalog-track {
-    grid-auto-columns: calc((100% - 32px) / 2);
-  }
-}
-
-@media (max-width: 860px) {
-  .catalog-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 0.25rem;
+  .method .container {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
-  .catalog-filters::-webkit-scrollbar {
-    display: none;
-  }
-
-  .catalog-filter {
-    flex-shrink: 0;
-  }
-}
-
-@media (max-width: 720px) {
-  .catalog {
-    padding: var(--space-xl) 0;
-  }
-
-  .catalog-panel {
-    border-radius: 18px;
-    padding: var(--space-lg) var(--space-sm);
-  }
-
-  .catalog-track {
-    grid-auto-columns: min(85vw, 360px);
+  .method-card {
+    padding: 1.5rem;
   }
 }
 
@@ -1074,332 +1139,669 @@ section[id] {
    Home — À propos
    ========================================================================== */
 
+/* Same near-opaque dark panel logic as .method. */
 .home-about {
-  background: var(--color-white);
-  border-top: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+  background: rgba(10, 10, 10, 0.56);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6rem 0;
 }
 
-/* Mobile default: .home-about-content is `display: contents` (its children
-   are promoted to direct items of .home-about-layout) so `order` below can
-   place the photo between the title and the body text — without
-   duplicating any content and without grid-template-areas. Desktop turns
-   this off, so .home-about-content becomes one ordinary flowing block. */
+@media (max-width: 767px) {
+  .home-about {
+    background: rgba(10, 10, 10, 0.68);
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+  }
+}
+
+/* Single, low-key glow — deliberately simpler than .method-glow (one
+   source, lower opacity) so this section reads as calmer and more
+   human, not a repeat of "La méthode Builder Lab". */
+.home-about-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 42% 42% at 88% 25%, rgba(201, 255, 59, 0.07), rgba(201, 255, 59, 0) 70%);
+  filter: blur(90px);
+}
+
 .home-about-layout {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-}
-
-.home-about-content {
-  display: contents;
-}
-
-.home-about-content .eyebrow {
-  order: 1;
-}
-
-.home-about-title {
-  order: 1;
-  margin-top: 1rem;
-  font-family: var(--font-body);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: 1.75rem;
-  line-height: 1.25;
+  gap: 2rem;
 }
 
 .home-about-photo {
-  order: 2;
-  margin-top: 1.5rem;
   display: flex;
   justify-content: center;
 }
 
 .home-about-photo img {
   display: block;
-  width: 200px;
-  height: 250px;
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
   object-position: center 15%;
   border-radius: 16px;
+  border: 1px solid var(--color-border-on-dark);
 }
 
-.home-about-content .home-about-text,
-.home-about-content .home-about-conclusion,
-.home-about-content .btn-primary {
-  order: 3;
+.home-about-content {
+  max-width: 620px;
+}
+
+/* Same values as .method-label / .hero-tag (the dark-background
+   mini-label variant) — its own class per this site's one-label-per-
+   section convention. */
+.home-about-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 255, 59, 0.45);
+  background: rgba(201, 255, 59, 0.12);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.home-about-title {
+  margin-top: 20px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 2.2rem;
+  line-height: 1.2;
+  color: var(--color-white);
 }
 
 .home-about-text {
-  color: var(--color-text-gray);
-  font-size: 1.02rem;
-  line-height: 1.6;
-}
-
-.home-about-title + .home-about-text {
-  margin-top: 1.5rem;
-}
-
-.home-about-text + .home-about-text {
-  margin-top: 1.25rem;
+  margin-top: 22px;
+  color: var(--color-text-gray-on-dark);
+  font-size: 1.05rem;
+  line-height: 1.55;
 }
 
 .home-about-text strong {
-  color: var(--color-ink);
+  color: var(--color-white);
 }
 
-.home-about-text + .home-about-conclusion {
-  margin-top: 1.25rem;
-  padding-left: var(--space-sm);
+.home-about-conclusion {
+  margin-top: 24px;
+  padding-left: 20px;
   border-left: 3px solid var(--color-accent);
   font-weight: 700;
   font-size: 1.1rem;
   line-height: 1.5;
+  color: var(--color-white);
 }
 
-.home-about-conclusion + .btn-primary {
-  align-self: flex-start;
-  margin-top: 2rem;
+.home-about-cta {
+  margin-top: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--color-white);
 }
 
-/* Desktop: fixed-width photo column, text column takes the rest.
-   `align-items: center` vertically centers the photo against the
-   text column's height. */
+.home-about-cta span {
+  display: inline-block;
+  color: var(--color-accent);
+  transition: transform 200ms var(--ease);
+}
+
+.home-about-cta:hover span {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-about-cta span {
+    transition: none;
+  }
+
+  .home-about-cta:hover span {
+    transform: none;
+  }
+}
+
 @media (min-width: 768px) {
   .home-about-layout {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr);
-    column-gap: 72px;
+    grid-template-columns: 32% minmax(0, 1fr);
+    column-gap: 80px;
     align-items: center;
   }
 
-  .home-about-content {
-    display: block;
-    max-width: 720px;
-  }
-
-  .home-about-title {
-    font-size: 2.25rem;
-  }
-
   .home-about-photo {
-    order: 0;
-    margin-top: 0;
+    justify-content: flex-start;
   }
 
   .home-about-photo img {
-    width: 240px;
-    height: 330px;
+    max-width: 260px;
+  }
+
+  .home-about-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-about .container {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
 /* ==========================================================================
-   Cas clients & projets
+   Projets & réalisations
    ========================================================================== */
 
-.cases {
-  position: relative;
-  overflow: hidden;
-  background-image: url("assets/cas-clients-builder-lab.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-top: 1px solid var(--color-border);
+/* Same translucent-panel logic as .services. */
+.projects {
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(222, 222, 210, 0.5);
 }
 
-.cases::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 0;
+@media (max-width: 767px) {
+  .projects {
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+  }
 }
 
-.cases > .container {
-  position: relative;
-  z-index: 1;
-}
-
-.cases-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-}
-
-.cases-head .eyebrow {
-  color: var(--color-white);
-}
-
-.cases-head .section-title {
-  color: var(--color-white);
-}
-
-.cases-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-shrink: 0;
-}
-
-.cases-arrow {
-  width: 46px;
-  height: 46px;
-  border: 1.5px solid transparent;
-  border-radius: 50%;
-  background: var(--color-white);
-  color: var(--color-black);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
-}
-
-.cases-arrow:hover {
-  border-color: var(--color-black);
-  background: var(--color-black);
-  color: var(--color-accent);
-}
-
-.cases-track-wrap {
-  margin-top: var(--space-md);
-  position: relative;
-}
-
-.cases-track {
-  position: relative;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: min(560px, 84vw);
-  gap: var(--space-md);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: var(--space-sm);
-  scrollbar-width: none;
-}
-
-.cases-track::-webkit-scrollbar {
-  display: none;
-}
-
-.case-card {
-  scroll-snap-align: start;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: var(--space-md);
-  display: flex;
-  flex-direction: column;
-  background: var(--color-white);
-  overflow: hidden;
-}
-
-.case-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-gray);
-}
-
-.case-title {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
-  line-height: 1.3;
-  margin-top: 0.4rem;
-}
-
-.case-tags {
-  margin-top: 0.6rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--color-text-gray);
-}
-
-.case-text {
-  margin-top: var(--space-xs);
-  color: var(--color-text-gray);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  flex-grow: 1;
-}
-
-.case-metric {
-  margin-top: var(--space-xs);
-  font-weight: 700;
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-  line-height: 1.3;
-}
-
-.case-conclusion {
-  margin-top: var(--space-xs);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--color-border);
-  font-weight: 700;
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.cases-dots {
-  margin-top: var(--space-md);
-  display: flex;
-  gap: 0.5rem;
-}
-
-.cases-dot {
-  width: 22px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.4);
-  transition: background var(--transition-fast), width var(--transition-fast);
-}
-
-.cases-dot.is-active {
-  background: var(--color-accent);
-  width: 38px;
-}
-
-/* ==========================================================================
-   CTA final
-   ========================================================================== */
-
-.cta-final {
-  background: var(--color-accent);
-  color: var(--color-black);
-}
-
-.cta-final-content {
-  max-width: 45rem;
-  margin: 0 auto;
+.projects-head {
   text-align: center;
 }
 
-.cta-final-title {
+/* Same visual language as .services-label (pill derived from the accent
+   green) so both section intros read as one consistent family. */
+.projects-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 255, 59, 0.6);
+  background: rgba(201, 255, 59, 0.1);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.projects-title {
+  margin-top: 1.375rem;
   font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: -0.01em;
-  font-size: 1.875rem;
-  line-height: 1.25;
-}
-
-.cta-final-text {
-  margin-top: var(--space-sm);
-  max-width: 38.75rem;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 1.05rem;
-  line-height: 1.6;
-}
-
-.cta-final-actions {
-  margin-top: 2rem;
-  display: flex;
-  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  color: var(--color-ink);
 }
 
 @media (min-width: 768px) {
-  .cta-final-title {
-    font-size: 2.375rem;
+  .projects-title {
+    font-size: 2.4rem;
+  }
+}
+
+.projects-sub {
+  margin-top: 1rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--color-text-gray);
+}
+
+/* Off-white rather than flat white, so the transition from the internal
+   hero banner into the catalog isn't a hard black-to-white cut. */
+.projects-catalog {
+  background: var(--color-offwhite);
+  /* Overrides .section-pad--tight's own padding-top only (same
+     specificity, later in source) so the transition below the internal
+     hero matches the other 2 internal pages exactly. */
+  padding-top: 4.5rem;
+}
+
+/* ---- Barre de filtres (dropdowns, projets.html uniquement) --------- */
+
+.projects-toolbar {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .projects-toolbar {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.projects-toolbar-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .projects-toolbar-filters {
+    flex-direction: row;
+    gap: 0.875rem;
+  }
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .filter-field {
+    width: auto;
+  }
+}
+
+.filter-field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-gray);
+}
+
+.select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .select-wrap {
+    width: 250px;
+  }
+}
+
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 1.15rem;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--color-text-gray);
+  border-bottom: 1.5px solid var(--color-text-gray);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.select-control {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 50px;
+  padding: 0 2.5rem 0 1.1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.select-control:hover {
+  border-color: #C8C8BE;
+}
+
+.select-control:focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+  border-color: var(--color-accent-dim);
+}
+
+.projects-count {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-gray);
+  white-space: nowrap;
+}
+
+.projects-empty {
+  margin-top: 2.75rem;
+  padding: var(--space-lg) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-offwhite);
+  text-align: center;
+}
+
+.projects-empty p {
+  font-size: 1rem;
+  color: var(--color-text-gray);
+}
+
+.projects-reset-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.projects-reset-btn:hover {
+  border-color: #C8C8BE;
+  background: var(--color-cream);
+}
+
+/* ---- CTA "Voir tous les projets" (homepage uniquement) -------------- */
+
+.projects-more {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.projects-more-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-black);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.projects-more-link span {
+  display: inline-block;
+  color: var(--color-accent);
+  transition: transform var(--transition-fast);
+}
+
+.projects-more-link:hover {
+  border-color: #C8C8BE;
+  background: var(--color-offwhite);
+}
+
+.projects-more-link:hover span {
+  transform: translateX(4px);
+}
+
+/* ---- Grille de projets ---------------------------------------------- */
+
+.projects-grid {
+  margin-top: 2.75rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .projects-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.project-card {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-white);
+  padding: var(--space-sm);
+  transition: transform 220ms var(--ease), border-color 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+
+@media (hover: hover) {
+  .project-card:hover {
+    transform: translateY(-3px);
+    border-color: #C8C8BE;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+  }
+}
+
+.project-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+/* Small green marker instead of a filled badge — same convention as
+   .eyebrow::before, kept deliberately understated per-type. */
+.project-card-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.project-card-category::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  background: var(--color-accent);
+}
+
+.project-card-date {
+  font-size: 0.8rem;
+  color: var(--color-text-gray);
+}
+
+.project-card-title {
+  margin-top: 0.7rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+
+.project-card-text {
+  margin-top: 0.5rem;
+  color: var(--color-text-gray);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Neutral grey dot by default; "en direct" gets the accent-green dot and
+   a slightly darker label so it reads as distinct from agency-mediated
+   contexts (via Le Wagon / Oliver Wyman / etc.) without ever looking like
+   a badge — see index.html comments for the disambiguation requirement. */
+.project-card-context {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-gray);
+}
+
+.project-card-context::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.project-card-context--live {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.project-card-context--live::before {
+  background: var(--color-accent);
+}
+
+.project-card-tags {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.project-card-tags span {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-offwhite);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card,
+  .select-control,
+  .projects-more-link,
+  .projects-reset-btn {
+    transition: none;
+  }
+
+  .project-card:hover {
+    transform: none;
+  }
+
+  .projects-more-link:hover span {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Internal hero — shared banner for projets.html / a-propos.html /
+   contact.html. One component, content only changes via the label/h1/sub
+   text in each page's markup. Reuses the exact Hero photo (no new asset,
+   no duplicate network fetch — same cached file) as a normal (non-fixed)
+   section background, since this is a bounded banner, not the homepage's
+   scroll-persistent layered effect.
+   ========================================================================== */
+
+.internal-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Symmetric padding only — no header-offset baked in here. The fixed
+     header simply overlays the top of this banner (same pattern as the
+     homepage Hero); true flex-centering requires equal top/bottom
+     padding, which asymmetric header-clearance padding would break. */
+  min-height: 300px;
+  padding: 2rem var(--space-md);
+  text-align: center;
+  background-image: url("assets/hero-atelier-builder-lab.webp");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+@media (min-width: 1024px) {
+  .internal-hero {
+    min-height: 380px;
+  }
+}
+
+.internal-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(5, 5, 5, 0.60), rgba(5, 5, 5, 0.68));
+}
+
+.internal-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+}
+
+.internal-hero-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  color: var(--color-white);
+}
+
+@media (min-width: 768px) {
+  .internal-hero-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .internal-hero-title {
+    font-size: 3rem;
+  }
+}
+
+.internal-hero-sub {
+  margin-top: 1rem;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  /* Reserves 2 lines' worth of height regardless of actual wrapped line
+     count (1 vs 2 across the 3 pages' subtitles) — without this, a
+     shorter subtitle makes the whole centered text block shorter, which
+     shifts the H1's own vertical center between pages even though the
+     block itself is still centered. Plain block flow already starts
+     text at the top, so any reserved slack simply falls below it. */
+  min-height: calc(1.5em * 2);
+}
+
+@media (max-width: 479px) {
+  .internal-hero {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
@@ -1410,6 +1812,15 @@ section[id] {
 .page-content {
   padding-top: calc(var(--header-height) + var(--space-lg));
   padding-bottom: var(--space-2xl);
+}
+
+/* Modifier for pages preceded by .internal-hero — the banner already
+   clears the fixed header, so this only needs the shorter "transition"
+   gap (not the full header-offset again). Scoped to a modifier class so
+   the shared .page-content rule above stays untouched for every other
+   page still using it standalone. */
+.page-content--after-hero {
+  padding-top: 4.5rem;
 }
 
 .page-content-inner {
@@ -1455,57 +1866,52 @@ section[id] {
    ========================================================================== */
 
 .contact-hero {
-  padding-top: calc(var(--header-height) + var(--space-lg));
+  padding-top: 4.5rem;
   padding-bottom: var(--space-2xl);
 }
 
 .contact-grid {
   display: grid;
-  gap: var(--space-lg);
+  gap: 4.5rem;
 }
 
 .contact-info {
-  max-width: 30rem;
+  max-width: 22rem;
 }
 
-.contact-title {
+.contact-info-title {
   font-family: var(--font-body);
   font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: 1.75rem;
-  line-height: 1.25;
-  margin-top: 1rem;
+  letter-spacing: -0.005em;
+  font-size: 1.1rem;
+  color: var(--color-ink);
 }
 
-.contact-text {
-  margin-top: 1.25rem;
-  color: var(--color-text-gray);
-  font-size: 1.02rem;
-  line-height: 1.6;
-}
-
-.contact-points {
-  margin-top: var(--space-md);
+.contact-methods {
+  margin-top: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 2rem;
 }
 
-.contact-points li {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
+.contact-method-label {
+  font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
+  color: var(--color-ink);
 }
 
-.contact-points li::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  background: var(--color-accent);
-  transform: translateY(-1px);
+.contact-method-value {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--color-text-gray);
+  transition: color var(--transition-fast);
+}
+
+.contact-method-value:hover {
+  color: var(--color-ink);
 }
 
 .contact-form-wrap {
@@ -1517,6 +1923,7 @@ section[id] {
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: var(--space-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
@@ -1531,6 +1938,7 @@ section[id] {
   grid-template-columns: 1fr;
   gap: var(--space-sm);
 }
+
 
 .form-field {
   display: flex;
@@ -1549,13 +1957,13 @@ section[id] {
 .form-field textarea {
   width: 100%;
   border: 1.5px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.7rem 0.85rem;
+  border-radius: 9px;
+  padding: 0.75rem 0.9rem;
   font-family: var(--font-body);
   font-size: 0.95rem;
   color: var(--color-ink);
   background: var(--color-white);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .form-field textarea {
@@ -1566,7 +1974,8 @@ section[id] {
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: var(--color-black);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(201, 255, 59, 0.35);
 }
 
 .form-error {
@@ -1595,6 +2004,7 @@ section[id] {
   border-radius: 8px;
   border-width: 0;
   width: 100%;
+  height: 52px;
   margin-top: var(--space-2xs);
 }
 
@@ -1640,16 +2050,8 @@ section[id] {
 
 @media (min-width: 768px) {
   .contact-grid {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: 1.35fr 0.85fr;
     align-items: start;
-  }
-
-  .contact-title {
-    font-size: 2.25rem;
-  }
-
-  .contact-form-wrap {
-    margin-left: auto;
   }
 
   .form-row {
@@ -1803,7 +2205,7 @@ section[id] {
   }
 
   .logo-img {
-    height: 18px;
+    height: 21px;
   }
 }
 
@@ -1822,10 +2224,6 @@ section[id] {
     justify-content: center;
   }
 
-  .hero-cta .link-cta {
-    justify-content: center;
-  }
-
   .section-pad {
     padding: var(--space-lg) 0;
   }
@@ -1836,9 +2234,5 @@ section[id] {
 
   .featured-card {
     padding: var(--space-md) var(--space-sm);
-  }
-
-  .cta-final-actions {
-    justify-content: center;
   }
 }
