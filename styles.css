@@ -31,9 +31,6 @@
   --space-xl: 5.5rem;
   --space-2xl: 5rem;
 
-  --radius-sm: 2px;
-  --radius-md: 3px;
-
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --transition-fast: 0.18s var(--ease);
   --transition-base: 0.35s var(--ease);
@@ -106,18 +103,6 @@ p {
   margin: 0;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -139,6 +124,16 @@ p {
   outline-offset: 3px;
 }
 
+/* On dark-background sections a black outline has no contrast against
+   the background — use the accent green there instead so focus stays
+   visible (WCAG 2.4.7). */
+.hero :focus-visible,
+.manifesto :focus-visible,
+.method :focus-visible,
+.mobile-nav :focus-visible {
+  outline-color: var(--color-accent);
+}
+
 section[id] {
   scroll-margin-top: var(--header-height);
 }
@@ -151,63 +146,6 @@ section[id] {
   max-width: var(--container-width);
   margin: 0 auto;
   padding: 0 var(--space-md);
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-black);
-}
-
-.eyebrow::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  background: var(--color-accent);
-}
-
-.eyebrow--on-dark {
-  color: var(--color-accent);
-}
-
-.eyebrow--on-accent {
-  color: var(--color-black);
-}
-
-.eyebrow--on-accent::before {
-  background: var(--color-black);
-}
-
-.section-head {
-  max-width: 40rem;
-  margin-bottom: var(--space-md);
-}
-
-/* Roboto is the section-title default everywhere. Anton is reserved for
-   the hero H1, the "En ce moment" title and the BUILD word only — see
-   those rules for the exceptions. */
-.section-title {
-  font-family: var(--font-body);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: clamp(1.65rem, 2.6vw, 2.35rem);
-  line-height: 1.18;
-  margin-top: var(--space-2xs);
-}
-
-.section-sub {
-  margin-top: var(--space-sm);
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-  line-height: 1.55;
-  color: var(--color-text-gray);
-  max-width: 38rem;
 }
 
 .section-pad {
@@ -248,7 +186,7 @@ section[id] {
   justify-content: center;
   gap: 0.5rem;
   padding: 1rem 1.9rem;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 700;
@@ -273,52 +211,6 @@ section[id] {
   border-color: var(--color-black);
 }
 
-.btn-dark {
-  background: var(--color-black);
-  color: var(--color-white);
-  border-radius: 8px;
-  border-width: 0;
-}
-
-.btn-dark:hover {
-  background: var(--color-white);
-  color: var(--color-black);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--color-white);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.btn-outline:hover {
-  border-color: var(--color-white);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.link-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: inherit;
-  transition: gap var(--transition-fast), opacity var(--transition-fast);
-}
-
-.link-cta::after {
-  content: "→";
-  transition: transform var(--transition-fast);
-}
-
-.link-cta:hover::after {
-  transform: translateX(4px);
-}
-
-.link-cta:hover {
-  opacity: 0.7;
-}
-
 /* ==========================================================================
    Header
    ========================================================================== */
@@ -329,7 +221,7 @@ section[id] {
   left: 0;
   right: 0;
   z-index: 200;
-  background: #FFFFFF;
+  background: var(--color-white);
   border-bottom: 1px solid #ECECEC;
   transition: box-shadow var(--transition-base);
 }
@@ -451,7 +343,7 @@ body.has-fixed-bg .site-bg-fixed {
   bottom: -6vh;
   z-index: 0;
   pointer-events: none;
-  background-color: #0A0A0A;
+  background-color: var(--color-ink);
   background-image: url("assets/hero-atelier-builder-lab.webp");
   background-size: cover;
   background-position: center center;
@@ -560,14 +452,6 @@ body.has-fixed-bg footer {
   line-height: 1.55;
 }
 
-.hero-steps {
-  margin-top: var(--space-sm);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--color-accent);
-}
-
 .hero-cta {
   display: flex;
   align-items: center;
@@ -651,7 +535,7 @@ body.has-fixed-bg footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0A0A0A;
+  background: var(--color-ink);
   padding: var(--space-lg) 0;
 }
 
@@ -922,7 +806,7 @@ body.has-fixed-bg footer {
 }
 
 .service-card:hover .service-card-cta {
-  color: #000000;
+  color: var(--color-black);
 }
 
 .service-card:hover .service-card-cta span {
@@ -1188,7 +1072,7 @@ body.has-fixed-bg footer {
   aspect-ratio: 3 / 4;
   object-fit: cover;
   object-position: center 15%;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--color-border-on-dark);
 }
 
@@ -1462,7 +1346,7 @@ body.has-fixed-bg footer {
   height: 50px;
   padding: 0 2.5rem 0 1.1rem;
   border: 1.5px solid var(--color-border);
-  border-radius: 11px;
+  border-radius: 8px;
   background: var(--color-white);
   font-family: var(--font-body);
   font-size: 0.92rem;
@@ -1602,8 +1486,8 @@ body.has-fixed-bg footer {
   gap: var(--space-sm);
 }
 
-/* Small green marker instead of a filled badge — same convention as
-   .eyebrow::before, kept deliberately understated per-type. */
+/* Small green marker instead of a filled badge, kept deliberately
+   understated per-type. */
 .project-card-category {
   display: inline-flex;
   align-items: center;
@@ -1803,6 +1687,16 @@ body.has-fixed-bg footer {
     padding-left: 20px;
     padding-right: 20px;
   }
+
+  /* a-propos.html's subtitle is notably longer than the other internal
+     pages' — at this width it wraps to enough lines that centering it
+     within the shared 300px min-height pushes the H1 up behind the fixed
+     header. This modifier only adds vertical room here; image, overlay,
+     padding and centering logic all stay identical to every other page
+     using .internal-hero. */
+  .internal-hero--tall-sub {
+    min-height: 420px;
+  }
 }
 
 /* ==========================================================================
@@ -1887,6 +1781,147 @@ body.has-fixed-bg footer {
 }
 
 /* ==========================================================================
+   About page (a-propos.html)
+   ========================================================================== */
+
+.about-timeline {
+  padding: var(--space-lg) 0;
+}
+
+.about-timeline h2,
+.about-expertise h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+  color: var(--color-ink);
+}
+
+.about-timeline-grid {
+  margin-top: var(--space-md);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .about-timeline-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  .about-timeline-photo {
+    justify-self: end;
+  }
+}
+
+.about-timeline-photo img {
+  display: block;
+  width: 100%;
+  max-width: 410px;
+  height: auto;
+  margin: 0 auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center 35%;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+}
+
+@media (min-width: 768px) {
+  .about-timeline-photo img {
+    margin: 0;
+  }
+}
+
+.timeline-list {
+  list-style: none;
+  border-left: 2px solid var(--color-border);
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0 0 var(--space-md) var(--space-md);
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 0.4rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+
+.timeline-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--color-text-gray);
+}
+
+.timeline-title {
+  margin-top: 0.3rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-ink);
+}
+
+.timeline-text {
+  margin-top: 0.4rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--color-text-gray);
+  max-width: 40rem;
+}
+
+.about-expertise {
+  padding: var(--space-lg) 0;
+  background: var(--color-offwhite);
+}
+
+.expertise-grid {
+  margin-top: var(--space-md);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .expertise-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg) var(--space-xl);
+  }
+}
+
+.expertise-item {
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.expertise-item h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-ink);
+}
+
+.expertise-item p {
+  margin-top: 0.5rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--color-text-gray);
+}
+
+/* ==========================================================================
    Contact page
    ========================================================================== */
 
@@ -1946,7 +1981,7 @@ body.has-fixed-bg footer {
 
 .contact-form {
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 14px;
   padding: var(--space-md);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
@@ -1982,7 +2017,7 @@ body.has-fixed-bg footer {
 .form-field textarea {
   width: 100%;
   border: 1.5px solid var(--color-border);
-  border-radius: 9px;
+  border-radius: 8px;
   padding: 0.75rem 0.9rem;
   font-family: var(--font-body);
   font-size: 0.95rem;
@@ -2255,9 +2290,5 @@ body.has-fixed-bg footer {
 
   .section-pad--tight {
     padding: var(--space-md) 0;
-  }
-
-  .featured-card {
-    padding: var(--space-md) var(--space-sm);
   }
 }

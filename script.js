@@ -338,6 +338,9 @@
       form.querySelectorAll(".form-field--invalid").forEach(function (el) {
         el.classList.remove("form-field--invalid");
       });
+      form.querySelectorAll('[aria-invalid="true"]').forEach(function (el) {
+        el.setAttribute("aria-invalid", "false");
+      });
     };
 
     var setError = function (name, message) {
@@ -347,6 +350,7 @@
       if (field) {
         var wrap = field.closest(".form-field");
         if (wrap) wrap.classList.add("form-field--invalid");
+        field.setAttribute("aria-invalid", "true");
       }
     };
 
